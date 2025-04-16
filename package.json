@@ -5,7 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "dev": "nodemon --exec ts-node server.ts",
-    "start": "node dist/server.js",
+    "start": "ts-node server.ts",
     "build": "tsc"
   },
   "keywords": [],
@@ -14,6 +14,7 @@
   "dependencies": {
     "@sendinblue/client": "^3.3.1",
     "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.5",
