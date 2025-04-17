@@ -119,7 +119,7 @@ export async function createUserService(
 ) {
   const transaction = await User.sequelize!.transaction();
   try {
-    // Hash the password before saving
+    // Hash the password before savingfff
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     // Set the hashed password to userData
