@@ -1,5 +1,3 @@
-// User Model (models/userModel.ts)
-
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database"; // Adjust the path as needed
 
@@ -23,14 +21,8 @@ User.init(
     password: { type: DataTypes.STRING, allowNull: false },
     phone: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM("Doctor", "Attorney"), allowNull: false },
-    otp: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    otpExpiresAt: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
-    },
+    otp: { type: DataTypes.STRING, allowNull: true },
+    otpExpiresAt: { type: DataTypes.BIGINT, allowNull: true },
     isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { sequelize, modelName: "User" }

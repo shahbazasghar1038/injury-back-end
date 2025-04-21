@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 
 import crypto from "crypto";
 import EmailService from "../utils/emailService";
+import { Transaction } from "sequelize";
+import Case from "../models/caseModel";
 interface UserData {
   fullName?: string;
   email?: string;
@@ -117,47 +119,45 @@ export async function createUserService(
   userData: any,
   addresses: AddressData[]
 ) {
-  const transaction = await User.sequelize!.transaction();
   try {
-    // Hash the password before savingfff
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    // Check if email already exists
+    const existingUser = await User.findOne({
+      where: { email: userData.email },
+    });
 
-    // Set the hashed password to userData
+    if (existingUser) {
+      throw new Error("Email is already taken");
+    }
+
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
     userData.password = hashedPassword;
 
-    // Create the user
-    const user = await User.create(userData, { transaction });
+    // Create the user in the database
+    const user: any = await User.create(userData);
 
-    // Generate a random OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit numeric OTP
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = Date.now() + OTP_EXPIRY_TIME;
-
-    // Store OTP and expiry time in the database
     user.otp = otp;
     user.otpExpiresAt = otpExpiresAt;
     user.isVerified = false; // Set isVerified to false initially
     await user.save();
 
-    // Create addresses for the user
+    // Create the addresses for the user
     await Promise.all(
-      addresses.map((addr) =>
-        Address.create({ ...addr, userId: user.id }, { transaction })
-      )
+      addresses.map((addr) => Address.create({ ...addr, userId: user.id }))
     );
 
-    // Commit the transaction
-    await transaction.commit();
-
-    // Step 4: Send OTP to the user's email using BREVO
+    // Send OTP email after user creation
     const subjectLine = "Your OTP for user verification";
     const contentBody = `<p>Your OTP for verifying your account is: <strong>${otp}</strong></p>`;
-
     await EmailService.send(user.email, { subjectLine, contentBody });
 
     return user;
   } catch (error) {
-    await transaction.rollback();
-    throw error;
+    console.error("Error during user creation:", error);
+    throw error; // Rethrow the error to be handled by the controller or caller
   }
 }
 
