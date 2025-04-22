@@ -31,25 +31,6 @@ export async function verifyUser(req: Request, res: Response): Promise<void> {
   const { email, otp } = req.body;
 
   try {
-<<<<<<< HEAD
-    // Call the verifyUserService to verify the user
-    const response = await verifyUserService(email, otp);
-
-    // Check the response status returned from the service
-    if (response.status === "success") {
-      // If the status is success, send the success message
-      res.status(200).json({ message: response.message });
-    } else {
-      // If the status is error, send the error message
-      res.status(400).json({ message: response.message });
-    }
-  } catch (error: any) {
-    // Catch any unexpected errors and send a 500 status code
-    console.error("Error during user verification:", error.message);
-    res
-      .status(500)
-      .json({ message: "An unexpected error occurred during verification" });
-=======
     const isVerified = await verifyUserService(email, otp);
     if (isVerified) {
       res.status(200).json({ message: "User verified successfully" });
@@ -59,9 +40,9 @@ export async function verifyUser(req: Request, res: Response): Promise<void> {
   } catch (error: any) {
     console.error("Error during user verification:", error.message);
     res.status(400).json({ message: error.message });
->>>>>>> 11e5daadda30940b420828caa99f257da770da67
   }
 }
+
 export async function login(
   req: Request,
   res: Response,
@@ -75,6 +56,7 @@ export async function login(
     res.status(401).json({ message: error.message });
   }
 }
+
 // Forgot password: Generate OTP and send it to the user's email
 export async function forgotPassword(
   req: Request,
@@ -118,7 +100,6 @@ export async function updatePassword(
   const { email, currentPassword, newPassword } = req.body;
 
   try {
-    // Call the updatePasswordService to validate the current password and update it
     const updated = await updatePasswordService(
       email,
       currentPassword,
@@ -135,6 +116,7 @@ export async function updatePassword(
     res.status(500).json({ message: error.message });
   }
 }
+
 // Get a single user by ID
 export async function getUserById(
   req: Request,

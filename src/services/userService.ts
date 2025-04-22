@@ -7,6 +7,7 @@ import crypto from "crypto";
 import EmailService from "../utils/emailService";
 import { Transaction } from "sequelize";
 import Case from "../models/caseModel";
+
 interface UserData {
   fullName?: string;
   email?: string;
@@ -190,42 +191,7 @@ export async function loginService(
   // Return both the token and the user data (with addresses)
   return { token, user };
 }
-<<<<<<< HEAD
 
-export async function verifyUserService(
-  email: string,
-  otp: string
-): Promise<{ status: string; message: string }> {
-  try {
-    // Step 1: Find the user by email
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return { status: "error", message: "User not found" };
-    }
-
-    // Step 2: Check if the OTP is valid and not expired
-    if (!user.otp || !user.otpExpiresAt || user.otpExpiresAt < Date.now()) {
-      return { status: "error", message: "OTP has expired or is invalid" };
-    }
-
-    if (user.otp !== otp) {
-      return { status: "error", message: "Invalid OTP" };
-    }
-
-    // Step 3: Mark the user as verified
-    user.isVerified = true;
-    user.otp = null; // Clear OTP after successful verification
-    user.otpExpiresAt = null; // Clear OTP expiry time
-    await user.save();
-
-    return { status: "success", message: "User successfully verified" };
-  } catch (error: any) {
-    return {
-      status: "error",
-      message: error.message || "An unexpected error occurred",
-    };
-  }
-=======
 export async function verifyUserService(
   email: string,
   otp: string
@@ -252,7 +218,6 @@ export async function verifyUserService(
   await user.save();
 
   return true; // User is successfully verified
->>>>>>> 11e5daadda30940b420828caa99f257da770da67
 }
 
 // Get a user by its ID (including addresses)
