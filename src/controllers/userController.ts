@@ -31,6 +31,7 @@ export async function verifyUser(req: Request, res: Response): Promise<void> {
   const { email, otp } = req.body;
 
   try {
+<<<<<<< HEAD
     // Call the verifyUserService to verify the user
     const response = await verifyUserService(email, otp);
 
@@ -48,6 +49,17 @@ export async function verifyUser(req: Request, res: Response): Promise<void> {
     res
       .status(500)
       .json({ message: "An unexpected error occurred during verification" });
+=======
+    const isVerified = await verifyUserService(email, otp);
+    if (isVerified) {
+      res.status(200).json({ message: "User verified successfully" });
+    } else {
+      res.status(400).json({ message: "Invalid OTP" });
+    }
+  } catch (error: any) {
+    console.error("Error during user verification:", error.message);
+    res.status(400).json({ message: error.message });
+>>>>>>> 11e5daadda30940b420828caa99f257da770da67
   }
 }
 export async function login(

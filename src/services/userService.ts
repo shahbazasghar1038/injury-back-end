@@ -190,6 +190,7 @@ export async function loginService(
   // Return both the token and the user data (with addresses)
   return { token, user };
 }
+<<<<<<< HEAD
 
 export async function verifyUserService(
   email: string,
@@ -224,6 +225,34 @@ export async function verifyUserService(
       message: error.message || "An unexpected error occurred",
     };
   }
+=======
+export async function verifyUserService(
+  email: string,
+  otp: string
+): Promise<boolean> {
+  // Step 1: Find the user by email
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Step 2: Check if the OTP is valid and not expired
+  if (!user.otp || !user.otpExpiresAt || user.otpExpiresAt < Date.now()) {
+    throw new Error("OTP has expired or invalid");
+  }
+
+  if (user.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  // Step 3: Mark the user as verified
+  user.isVerified = true;
+  user.otp = null; // Clear OTP after successful verification
+  user.otpExpiresAt = null; // Clear OTP expiry time
+  await user.save();
+
+  return true; // User is successfully verified
+>>>>>>> 11e5daadda30940b420828caa99f257da770da67
 }
 
 // Get a user by its ID (including addresses)
