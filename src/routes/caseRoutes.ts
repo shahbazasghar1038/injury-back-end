@@ -13,6 +13,7 @@ router.post("/create", createCase);
 // Route to get all ongoing cases
 router.get("/ongoing", getAllCases);
 
+router.get("/:userId", getAllCases);
 // Route to update case status
 router.put("/:id/status", updateCaseStatus);
 

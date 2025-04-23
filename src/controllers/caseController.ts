@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  createCaseService,
-  getActiveCaseCount,
-  getAllCasesService,
-  updateCaseStatusService,
-  canAddFreeCase,
-} from "../services/caseService";
+import { Sequelize, Op } from "sequelize";
 import Case from "../models/caseModel";
 import User from "../models/userModel";
+import UserCases from "../models/userCasesModel"; // Junction table
+
+const FREE_CASE_LIMIT = 3;
 
 // Controller to create a new case and check if the user has exceeded free case limit
 export async function createCase(
@@ -19,7 +16,17 @@ export async function createCase(
 
   try {
     // Check if user can add more free cases
-    const canAddFree = await canAddFreeCase(userId);
+    const userCaseCount = await Case.count({
+      include: [
+        {
+          model: User,
+          where: { id: userId },
+          through: { where: {} },
+        },
+      ],
+    });
+
+    const canAddFree = userCaseCount < FREE_CASE_LIMIT;
 
     // If user has exceeded free limit and case is not marked as paid
     if (!canAddFree && !caseData.isPaidCase) {
@@ -31,26 +38,64 @@ export async function createCase(
     }
 
     // Create the case in the database with userId
-    const caseInstance = await createCaseService(caseData, userId);
+    const newCase = await Case.create({
+      ...caseData,
+      paymentStatus: caseData.isPaidCase ? "Paid" : "Unpaid",
+    });
+
+    // Associate the case with the user in the junction table
+    await UserCases.create({
+      userId: userId,
+      caseId: newCase.id,
+    });
 
     // Send the response with case data
-    res.status(201).json({ case: caseInstance });
-  } catch (error) {
-    next(error);
+    res.status(201).json({ case: newCase });
+  } catch (error: any) {
+    console.error("Error creating case:", error.message);
+    res.status(500).json({ error: error.message }); // Return the error message to the client
   }
 }
 
 // Controller to get all ongoing cases
+// export async function getAllCases(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     const cases = await Case.findAll();
+
+//     res.status(200).json(cases);
+//   } catch (error: any) {
+//     console.error("Error fetching cases:", error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// }
+
 export async function getAllCases(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  const { userId } = req.params; // Assuming userId is passed as a URL parameter
+
   try {
-    const cases = await getAllCasesService();
+    // Fetch cases based on the userId
+    const cases = await Case.findAll({
+      include: [
+        {
+          model: User, // Assuming you have a relationship set up between Case and User
+          where: { id: userId }, // Filter by userId
+        },
+      ],
+    });
+
+    // Send the response with the cases
     res.status(200).json(cases);
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error("Error fetching cases:", error.message);
+    res.status(500).json({ error: error.message });
   }
 }
 
@@ -64,9 +109,20 @@ export async function updateCaseStatus(
   const { status } = req.body;
 
   try {
-    const updatedCase = await updateCaseStatusService(Number(id), status);
-    res.status(200).json(updatedCase);
-  } catch (error) {
-    next(error);
+    const caseToUpdate = await Case.findByPk(id);
+
+    if (!caseToUpdate) {
+      throw new Error("Case not found");
+    }
+
+    // Update case status
+    caseToUpdate.status = status;
+    await caseToUpdate.save();
+
+    // Send the updated case data
+    res.status(200).json(caseToUpdate);
+  } catch (error: any) {
+    console.error("Error updating case status:", error.message);
+    res.status(500).json({ error: error.message });
   }
 }

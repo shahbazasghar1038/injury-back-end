@@ -7,6 +7,7 @@ import userRoutes from "./src/routes/userRoutes";
 import User from "./src/models/userModel"; // Import User model
 import Case from "./src/models/caseModel"; // Import Case model
 import caseRoutes from "./src/routes/caseRoutes"; // Import your case routes
+import taskRoutes from "./src/routes/taskRoutes";
 import { setupAssociations } from "./src/models/associations";
 
 dotenv.config();
@@ -28,7 +29,7 @@ app.use(express.json());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/cases", caseRoutes);
-
+app.use("/api/tasks", taskRoutes);
 // Setup associations
 setupAssociations();
 
