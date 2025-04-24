@@ -1,0 +1,32 @@
+name: Node.js PM2 Deployment
+
+on:
+  push:
+    branches:
+      - main  # You can change this to the branch you want to trigger the workflow
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js v20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+
+    - name: Install dependencies
+      run: |
+        npm install
+        sudo apt-get install -y pm2
+
+    - name: Start Application with PM2
+      run: |
+        pm2 start npm --name "stage-inj" -- start
+
+    - name: Save PM2 process list
+      run: |
+        pm2 save
