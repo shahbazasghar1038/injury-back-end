@@ -18,7 +18,7 @@ jobs:
 
     - name: Sync project to target directory
       run: |
-        rsync -av --delete ./ /home/ubuntu/injury-back-end/
+        rsync -av --delete --exclude='.env' ./ /home/ubuntu/injury-back-end/
 
 
     - name: Install dependencies
