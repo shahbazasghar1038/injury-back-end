@@ -3,30 +3,34 @@ name: Node.js PM2 Deployment
 on:
   push:
     branches:
-      - main  # You can change this to the branch you want to trigger the workflow
+      - master  # Change if needed
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    
+    runs-on: [self-hosted, stage]
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Node.js v20.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.x'
+    - name: Set working directory
+      run: cd /home/ubuntu/injury-back-end
+
+    - name: Sync project to target directory
+      run: |
+        rsync -av --delete ./ /home/ubuntu/injury-back-end/
+
 
     - name: Install dependencies
+      working-directory: /home/ubuntu/injury-back-end
       run: |
         npm install
-        sudo apt-get install -y pm2
 
-    - name: Start Application with PM2
+    - name: Delete existing PM2 process (if any)
+      run: |
+        pm2 delete stage-inj || true
+
+    - name: Start application with PM2
+      working-directory: /home/ubuntu/injury-back-end
       run: |
         pm2 start npm --name "stage-inj" -- start
-
-    - name: Save PM2 process list
-      run: |
-        pm2 save
