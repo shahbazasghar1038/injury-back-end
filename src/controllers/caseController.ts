@@ -4,6 +4,7 @@ import Case from "../models/caseModel";
 import User from "../models/userModel";
 import UserCases from "../models/userCasesModel"; // Junction table
 import EmailService from "../utils/emailService";
+import ArchivedCase from "../models/archivedCaseModel";
 
 const FREE_CASE_LIMIT = 3;
 
@@ -82,8 +83,22 @@ export async function getAllCases(
   const { userId } = req.params; // Assuming userId is passed as a URL parameter
 
   try {
-    // Fetch cases based on the userId
+    // Get a list of archived case IDs from the ArchivedCase table
+    const archivedCaseIds = await ArchivedCase.findAll({
+      attributes: ["caseId"], // Only retrieve the caseId field
+    });
+
+    const archivedCaseIdsList = archivedCaseIds.map(
+      (archivedCase) => archivedCase.caseId
+    );
+
+    // Fetch cases based on the userId and exclude the archived cases
     const cases = await Case.findAll({
+      where: {
+        id: {
+          [Op.notIn]: archivedCaseIdsList, // Exclude archived case IDs
+        },
+      },
       include: [
         {
           model: User, // Assuming you have a relationship set up between Case and User
@@ -108,16 +123,26 @@ export async function getCaseById(
   const { caseId } = req.params;
 
   try {
-    // Find the case by the given caseId
-    const caseInstance = await Case.findByPk(caseId); // Find case by primary key (ID)
+    // Find the case by the given caseId and include associated users (doctors/providers)
+    const caseInstance: any = await Case.findByPk(caseId, {
+      include: [
+        {
+          model: User,
+          where: { role: "Doctor" }, // Only include doctors (or providers)
+        },
+      ],
+    });
 
     if (!caseInstance) {
       // If no case is found with the given caseId, send a 404 response
       return res.status(404).json({ error: "Case not found" });
     }
 
-    // Send the case data in the response
-    return res.status(200).json(caseInstance);
+    // Send the case data and the associated doctors in the response
+    return res.status(200).json({
+      case: caseInstance,
+      doctors: caseInstance.Users, // This will return the associated doctors (users)
+    });
   } catch (error: any) {
     next(error); // Handle the error via middleware
   }
@@ -149,6 +174,7 @@ export async function updateCaseStatus(
     res.status(500).json({ error: error.message });
   }
 }
+
 export async function addDoctorToCase(
   req: Request,
   res: Response,
@@ -157,6 +183,11 @@ export async function addDoctorToCase(
   const { caseId, doctorIds } = req.body; // caseId and an array of doctorIds
 
   try {
+    // Ensure that the caseId and doctorIds are provided
+    if (!caseId || !Array.isArray(doctorIds) || doctorIds.length === 0) {
+      return res.status(400).json({ error: "Invalid caseId or doctorIds" });
+    }
+
     // Find the case by its ID
     const caseInstance = await Case.findByPk(caseId);
     if (!caseInstance) {
@@ -177,16 +208,44 @@ export async function addDoctorToCase(
         .json({ error: "No doctors found with the provided IDs" });
     }
 
+    // Check if any doctor is already assigned to the case
+    const existingAssociations = await UserCases.findAll({
+      where: {
+        caseId: caseInstance.id,
+        userId: doctorIds,
+      },
+    });
+
+    if (existingAssociations.length > 0) {
+      return res.status(400).json({
+        error: "One or more doctors are already assigned to this case",
+      });
+    }
+
     // Create associations between the doctors and the case
     const userCases = doctors.map((doctor) => {
       return UserCases.create({
         userId: doctor.id,
         caseId: caseInstance.id,
+      }).catch((err) => {
+        // Handle individual doctor add failure
+        return {
+          error: `Failed to add doctor ${doctor.fullName}: ${err.message}`,
+        };
       });
     });
 
     // Wait for all associations to be created
-    await Promise.all(userCases);
+    const results = await Promise.all(userCases);
+
+    // Filter out any failed cases and handle them
+    const failedResults = results.filter((result: any) => result.error);
+    if (failedResults.length > 0) {
+      return res.status(500).json({
+        message: "Some doctors were not added successfully",
+        failedResults,
+      });
+    }
 
     // Send email notifications to each doctor
     const subjectLine = "You have been added to a case as a doctor";
@@ -198,11 +257,26 @@ export async function addDoctorToCase(
                          <p>Thank you for your support.</p>`;
 
     // Send the email to each doctor
-    await Promise.all(
+    const emailResults = await Promise.all(
       doctors.map((doctor) =>
-        EmailService.send(doctor.email, { subjectLine, contentBody })
+        EmailService.send(doctor.email, { subjectLine, contentBody }).catch(
+          (err) => {
+            return {
+              error: `Failed to send email to ${doctor.email}: ${err.message}`,
+            };
+          }
+        )
       )
     );
+
+    // Filter out any failed email sends and handle them
+    const failedEmails = emailResults.filter((result: any) => result.error);
+    if (failedEmails.length > 0) {
+      return res.status(500).json({
+        message: "Some emails were not sent successfully",
+        failedEmails,
+      });
+    }
 
     // Send a success response
     res.status(200).json({
@@ -210,6 +284,8 @@ export async function addDoctorToCase(
       doctors,
     });
   } catch (error: any) {
+    // Catch any other unhandled errors
+    console.error("Error in addDoctorToCase:", error.message);
     next(error); // Pass the error to the error handling middleware
   }
 }

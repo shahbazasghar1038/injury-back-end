@@ -10,6 +10,7 @@ import caseRoutes from "./src/routes/caseRoutes"; // Import your case routes
 import taskRoutes from "./src/routes/taskRoutes";
 import doctorInvitationRoutes from "./src/routes/doctorInvitationRoutes";
 import docusealRoutes from "./src/routes/docusealRoutes";
+import archivedCaseRoutes from "./src/routes/archivedCaseRoutes";
 import { setupAssociations } from "./src/models/associations";
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use("/api/cases", caseRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/invite", doctorInvitationRoutes);
 app.use("/api/docuseal", docusealRoutes);
+app.use("/api/archive", archivedCaseRoutes);
 // Setup associations
 setupAssociations();
 
