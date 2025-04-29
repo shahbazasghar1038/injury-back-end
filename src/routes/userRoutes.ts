@@ -42,7 +42,7 @@ router.get("/", getAllUsers);
 // UPDATE user by ID
 router.put("/:id", updateUser);
 
-// DELETE user by ID
+// DELETE user by IDdddddddddddddddddd
 router.delete("/:id", deleteUser);
 
 export default router;
