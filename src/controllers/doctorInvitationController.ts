@@ -29,7 +29,9 @@ export async function inviteDoctor(
 
     await EmailService.send(email, { subjectLine, contentBody });
 
-    res.status(201).json({ message: "Invitation sent successfully" });
+    res
+      .status(201)
+      .json({ message: "Invitation sent successfully", id: invitation.id });
   } catch (error: any) {
     console.error("Error sending invitation:", error);
     next(error);
