@@ -11,7 +11,10 @@ import taskRoutes from "./src/routes/taskRoutes";
 import doctorInvitationRoutes from "./src/routes/doctorInvitationRoutes";
 import docusealRoutes from "./src/routes/docusealRoutes";
 import archivedCaseRoutes from "./src/routes/archivedCaseRoutes";
+<<<<<<< HEAD
 import intakeRoutes from "./src/routes/intakeRoutes";
+=======
+>>>>>>> e2e97806a197412924a799aba391e81cd7262c33
 import { setupAssociations } from "./src/models/associations";
 
 dotenv.config();
