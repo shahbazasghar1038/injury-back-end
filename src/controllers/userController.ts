@@ -281,17 +281,22 @@ export async function updateUser(
   try {
     const userId = req.params.id;
     const { userData, addresses } = req.body;
+
+    // Find the user by ID
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update the user and addresses
+    // Update the user with new data
     await user.update(userData);
 
+    // If new addresses are provided, update them
     if (addresses && addresses.length > 0) {
-      // Remove old addresses and add the new ones
+      // Remove old addresses
       await Address.destroy({ where: { userId: user.id } });
+
+      // Add new addresses
       await Promise.all(
         addresses.map((addr: any) =>
           Address.create({ ...addr, userId: user.id })
@@ -299,7 +304,16 @@ export async function updateUser(
       );
     }
 
-    res.json(user);
+    // Fetch updated addresses
+    const updatedAddresses = await Address.findAll({
+      where: { userId: user.id },
+    });
+
+    // Send the updated user data along with the updated addresses
+    res.json({
+      user,
+      addresses: updatedAddresses,
+    });
   } catch (error: any) {
     next(error);
   }

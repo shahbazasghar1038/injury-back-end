@@ -128,7 +128,6 @@ export async function getCaseById(
       include: [
         {
           model: User,
-          where: { role: "Doctor" }, // Only include doctors (or providers)
         },
       ],
     });
