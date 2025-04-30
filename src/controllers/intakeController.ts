@@ -21,18 +21,16 @@ export async function createIntakeCase(
     accidentDescription,
     injuries,
     weatherConditions,
+    defendantInsuranceBase64, // Assuming the base64 file is sent under this name
   } = req.body;
-  const files: any = req.files; // Assuming the files are uploaded via form-data
 
   try {
-    let defendantInsuranceUrl: any = null;
+    let defendantInsuranceUrl: string | null = null;
 
-    // If a defendant insurance file is uploaded, upload it to S3
-    if (files && files.defendantInsurance) {
-      defendantInsuranceUrl = await uploadFileToS3(
-        files.defendantInsurance[0],
-        "inj-s3"
-      );
+    // If defendant insurance file is provided as base64, upload it to S3
+    if (defendantInsuranceBase64) {
+      const buffer = Buffer.from(defendantInsuranceBase64, "base64");
+      defendantInsuranceUrl = await uploadFileToS3(buffer, "inj-s3");
     }
 
     // Create the intake case record
