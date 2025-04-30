@@ -5,6 +5,7 @@ import User from "../models/userModel";
 import UserCases from "../models/userCasesModel"; // Junction table
 import EmailService from "../utils/emailService";
 import ArchivedCase from "../models/archivedCaseModel";
+import Task from "../models/taskModel";
 
 const FREE_CASE_LIMIT = 3;
 
@@ -171,6 +172,45 @@ export async function updateCaseStatus(
   } catch (error: any) {
     console.error("Error updating case status:", error.message);
     res.status(500).json({ error: error.message });
+  }
+}
+
+export async function deleteCase(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  const { caseId } = req.params; // Get the caseId from the request parameters
+
+  try {
+    // Find the case by its ID
+    const caseInstance = await Case.findByPk(caseId);
+    if (!caseInstance) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
+    // Check if the case is archived
+    const archivedCase = await ArchivedCase.findOne({ where: { caseId } });
+    if (archivedCase) {
+      // If the case is archived, delete the archived case first
+      await ArchivedCase.destroy({ where: { caseId } });
+    }
+
+    // Delete all associated tasks
+    await Task.destroy({ where: { caseId } });
+
+    // Now delete the case
+    await Case.destroy({ where: { id: caseId } });
+
+    // Send a success response
+    res
+      .status(200)
+      .json({
+        message:
+          "Case and its associated tasks and archived record successfully deleted",
+      });
+  } catch (error: any) {
+    next(error); // Pass the error to the error-handling middleware
   }
 }
 
