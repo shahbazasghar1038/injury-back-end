@@ -19,17 +19,14 @@ dotenv.config();
 const app = express();
 
 // Enable CORS for all origins or specify your frontend URL
+app.options("*", cors());
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://master.d1jucqmuvgmas2.amplifyapp.com",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "*", // Replace with your frontend URL if needed
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
 );
-
 // Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
