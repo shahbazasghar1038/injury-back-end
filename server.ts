@@ -19,19 +19,28 @@ dotenv.config();
 const app = express();
 
 // Enable CORS for all origins or specify your frontend URL
-app.options("*", cors()); // Handle preflight requests for all routes
+const allowedOrigins = [
+  "http://localhost:5173", // Local Development URL
+  "https://master.d1jucqmuvgmas2.amplifyapp.com", // Your Amplify URL
+];
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // Localhost for development
-      "https://master.d1jucqmuvgmas2.amplifyapp.com", // Amplify URL for production
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow specific methods
-    credentials: true, // Allow sending cookies and authorization headers
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"), false);
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true, // Important to allow cookies and authorization headers
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.options("*", cors());
 // Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
