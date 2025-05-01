@@ -21,7 +21,10 @@ const app = express();
 // Enable CORS for all origins or specify your frontend URL
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://master.d1jucqmuvgmas2.amplifyapp.com",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
