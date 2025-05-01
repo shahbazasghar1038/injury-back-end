@@ -19,12 +19,17 @@ dotenv.config();
 const app = express();
 
 // Enable CORS for all origins or specify your frontend URL
-app.options("*", cors());
+app.options("*", cors()); // Handle preflight requests for all routes
+
 app.use(
   cors({
-    origin: "*", // Replace with your frontend URL if needed
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
+    origin: [
+      "http://localhost:5173", // Localhost for development
+      "https://master.d1jucqmuvgmas2.amplifyapp.com", // Amplify URL for production
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow specific methods
+    credentials: true, // Allow sending cookies and authorization headers
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
   })
 );
 // Middleware
