@@ -175,6 +175,43 @@ export async function updateCaseStatus(
   }
 }
 
+export async function updateCaseStatusOfLienOffer(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const { id } = req.params;
+  const { status, DoctorAcceptanceStatus, startDate, billAmount } = req.body;
+
+  try {
+    // Find the case by its ID
+    const caseToUpdate = await Case.findByPk(id);
+
+    if (!caseToUpdate) {
+      throw new Error("Case not found");
+    }
+
+    // Update case status, billAmount, startDate, and DoctorAcceptanceStatus
+    if (status) caseToUpdate.status = status;
+    if (DoctorAcceptanceStatus)
+      caseToUpdate.DoctorAcceptanceStatus = DoctorAcceptanceStatus;
+    if (startDate) caseToUpdate.startDate = startDate;
+    if (billAmount !== undefined) caseToUpdate.billAmount = billAmount;
+
+    // Save the updated case data
+    await caseToUpdate.save();
+
+    // Send the updated case data in the response
+    res.status(200).json({
+      message: "Case updated successfully",
+      updatedCase: caseToUpdate,
+    });
+  } catch (error: any) {
+    console.error("Error updating case status:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 export async function deleteCase(
   req: Request,
   res: Response,
@@ -203,12 +240,10 @@ export async function deleteCase(
     await Case.destroy({ where: { id: caseId } });
 
     // Send a success response
-    res
-      .status(200)
-      .json({
-        message:
-          "Case and its associated tasks and archived record successfully deleted",
-      });
+    res.status(200).json({
+      message:
+        "Case and its associated tasks and archived record successfully deleted",
+    });
   } catch (error: any) {
     next(error); // Pass the error to the error-handling middleware
   }

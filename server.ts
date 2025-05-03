@@ -13,7 +13,7 @@ import docusealRoutes from "./src/routes/docusealRoutes";
 import archivedCaseRoutes from "./src/routes/archivedCaseRoutes";
 import intakeRoutes from "./src/routes/intakeRoutes";
 import { setupAssociations } from "./src/models/associations";
-
+import lienOfferRoutes from "./src//routes/lienOfferRoutes";
 dotenv.config();
 
 const app = express();
@@ -53,6 +53,7 @@ app.use("/api/invite", doctorInvitationRoutes);
 app.use("/api/docuseal", docusealRoutes);
 app.use("/api/archive", archivedCaseRoutes);
 app.use("/api/intakes", intakeRoutes);
+app.use("/api/lien-offers", lienOfferRoutes);
 // Setup associations
 setupAssociations();
 
