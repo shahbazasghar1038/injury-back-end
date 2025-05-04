@@ -12,16 +12,17 @@ export async function createTask(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const { taskTitle, status, description, caseId, fileBase64 } = req.body; // fileBase64 should come as a part of the request
+  const { taskTitle, status, description, caseId, file } = req.body; // file should come as a part of the request
 
   try {
     let fileUrl: string | null = null;
 
     // If file is uploaded in base64 format, upload it to S3
-    if (fileBase64) {
-      const buffer = Buffer.from(fileBase64, "base64"); // Convert base64 to buffer
+    if (file) {
+      const buffer = Buffer.from(file, "base64"); // Convert base64 to buffer
       fileUrl = await uploadFileToS3(buffer, "inj-s3"); // Pass buffer to S3 upload function
     }
+    console.log(taskTitle, status, description, fileUrl, caseId);
 
     // Create the task record with the URL of the file in the `files` field
     const task = await Task.create({
@@ -31,6 +32,7 @@ export async function createTask(
       files: fileUrl,
       caseId,
     });
+    console.log(task);
 
     res.status(201).json({
       message: "Task created successfully",
