@@ -13,6 +13,6 @@ router.post("/archived", archiveCase);
 
 router.delete("/unarchive/:archivedCaseId", unarchiveCase);
 
-router.get("/", getAllArchivedCases);
+router.get("/:id", getAllArchivedCases);
 
 export default router;

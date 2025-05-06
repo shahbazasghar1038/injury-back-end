@@ -8,7 +8,7 @@ export async function archiveCase(
   res: Response,
   next: NextFunction
 ): Promise<any> {
-  const { caseId, reason } = req.body;
+  const { caseId, reason, userId } = req.body; // Include userId in the request body
 
   try {
     // Find the case by ID
@@ -17,21 +17,20 @@ export async function archiveCase(
       return res.status(404).json({ error: "Case not found" });
     }
 
-    // Create the archived case record
+    // Create the archived case record with userId
     const archivedCase = await ArchivedCase.create({
       caseId,
       archivedAt: new Date(),
       reason,
+      userId, // Associate the archived case with the user
     });
-
-    // Optionally, you can update the original case status to "Archived" if needed
-    // caseInstance.status = "Archived";
-    // await caseInstance.save();
 
     res
       .status(200)
       .json({ message: "Case successfully archived", archivedCase });
   } catch (error: any) {
+    console.log("Error archiving case:", error);
+
     next(error);
   }
 }
@@ -71,13 +70,16 @@ export async function getAllArchivedCases(
   res: Response,
   next: NextFunction
 ): Promise<any> {
+  const { id } = req.params; // Get userId from the URL parameter
+
   try {
-    // Fetch all archived cases
+    // Fetch all archived cases based on userId (which is passed in the URL as :id)
     const archivedCases = await ArchivedCase.findAll({
+      where: { userId: id }, // Use the userId from the route parameter
       include: [
         {
           model: Case, // Include the associated Case model data
-          as: "case", // Use the alias defined in associations (optional)
+          as: "case", // Alias for case details
         },
       ],
     });
