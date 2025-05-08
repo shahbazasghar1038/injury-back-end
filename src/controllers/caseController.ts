@@ -6,6 +6,7 @@ import UserCases from "../models/userCasesModel"; // Junction table
 import EmailService from "../utils/emailService";
 import ArchivedCase from "../models/archivedCaseModel";
 import Task from "../models/taskModel";
+import ProviderTreatmentRecord from "../models/providerTreatmentRecord";
 
 const FREE_CASE_LIMIT = 3;
 
@@ -60,21 +61,42 @@ export async function createCase(
   }
 }
 
-// Controller to get all ongoing cases
-// export async function getAllCases(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     const cases = await Case.findAll();
+export async function updateCase(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  const { caseId } = req.params; // Get the caseId from the request parameters
+  const updates = req.body; // Get the fields to update from the request body
 
-//     res.status(200).json(cases);
-//   } catch (error: any) {
-//     console.error("Error fetching cases:", error.message);
-//     res.status(500).json({ error: error.message });
-//   }
-// }
+  try {
+    // Find the case by its ID
+    const caseToUpdate: any = await Case.findByPk(caseId);
+    if (!caseToUpdate) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
+    // Dynamically update fields based on what is passed in the request body
+    Object.keys(updates).forEach((key) => {
+      if (updates[key] !== undefined) {
+        caseToUpdate[key] = updates[key]; // Update the field dynamically
+      }
+    });
+
+    // Save the updated case data
+    await caseToUpdate.save();
+
+    // Send the updated case data in the response
+    res.status(200).json({
+      message: "Case updated successfully",
+      updatedCase: caseToUpdate,
+    });
+  } catch (error: any) {
+    // Catch and handle any errors
+    console.error("Error updating case:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+}
 
 export async function getAllCases(
   req: Request,
@@ -116,6 +138,53 @@ export async function getAllCases(
   }
 }
 
+export async function getCaseByIdLien(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  const { caseId } = req.params; // Get the caseId from the request parameters
+
+  try {
+    // Find the case by the given caseId and include the associated doctors (users with the role 'Doctor')
+    const caseInstance: any = await Case.findByPk(caseId, {
+      include: [
+        {
+          model: User,
+          where: { role: "Doctor" }, // Filter users by "Doctor" role
+          // as: "doctors", // Alias for doctors
+        },
+      ],
+    });
+
+    // Check if the case exists
+    if (!caseInstance) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
+    // Fetch the provider treatment records for the doctors associated with the case
+    const providerTreatmentRecords = await ProviderTreatmentRecord.findAll({
+      where: { caseId: caseInstance.id },
+      // include: [
+      //   {
+      //     model: User,
+      //     as: "user", // Alias for accessing user (doctor) details
+      //   },
+      // ],
+    });
+
+    // Send the case data, associated doctors, and provider treatment records in the response
+    return res.status(200).json({
+      case: caseInstance,
+      doctors: caseInstance.doctors, // Doctors associated with the case
+      providerTreatmentRecords: providerTreatmentRecords, // Fetching provider treatment records based on caseId
+    });
+  } catch (error: any) {
+    // Handle any error that might occur and pass it to the error handling middleware
+    next(error);
+  }
+}
+
 export async function getCaseById(
   req: Request,
   res: Response,
@@ -129,6 +198,8 @@ export async function getCaseById(
       include: [
         {
           model: User,
+          where: { role: "Doctor" }, // Filter users by "Doctor" role
+          // as: "doctors", // Alias for doctors
         },
       ],
     });
@@ -302,7 +373,7 @@ export async function addDoctorToCase(
         userId: doctor.id,
         caseId: caseInstance.id,
       }).catch((err) => {
-        // Handle individual doctor add failure
+        // Return error object if doctor add fails
         return {
           error: `Failed to add doctor ${doctor.fullName}: ${err.message}`,
         };
@@ -313,11 +384,43 @@ export async function addDoctorToCase(
     const results = await Promise.all(userCases);
 
     // Filter out any failed cases and handle them
-    const failedResults = results.filter((result: any) => result.error);
+    const failedResults = results.filter(
+      (result: any) => result && result.error
+    );
     if (failedResults.length > 0) {
       return res.status(500).json({
         message: "Some doctors were not added successfully",
         failedResults,
+      });
+    }
+
+    // Create the provider treatment records for the doctors
+    const providerTreatmentRecords = doctors.map((doctor) => {
+      return ProviderTreatmentRecord.create({
+        caseId: caseInstance.id,
+        userId: doctor.id,
+        treatmentStatus: "Pending", // Default value for treatmentStatus
+        bill: "", // Default empty bill string
+        recordRequest: "Pending", // Default value for recordRequest
+      }).catch((err) => {
+        // Return error object if provider treatment record creation fails
+        return {
+          error: `Failed to create provider treatment record for doctor ${doctor.fullName}: ${err.message}`,
+        };
+      });
+    });
+
+    // Wait for all treatment records to be created
+    const recordResults = await Promise.all(providerTreatmentRecords);
+
+    // Filter out any failed records and handle them
+    const failedRecords = recordResults.filter(
+      (result: any) => result && result.error
+    );
+    if (failedRecords.length > 0) {
+      return res.status(500).json({
+        message: "Some treatment records were not created successfully",
+        failedRecords,
       });
     }
 
@@ -344,7 +447,9 @@ export async function addDoctorToCase(
     );
 
     // Filter out any failed email sends and handle them
-    const failedEmails = emailResults.filter((result: any) => result.error);
+    const failedEmails = emailResults.filter(
+      (result: any) => result && result.error
+    );
     if (failedEmails.length > 0) {
       return res.status(500).json({
         message: "Some emails were not sent successfully",

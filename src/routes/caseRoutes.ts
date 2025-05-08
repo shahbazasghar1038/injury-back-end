@@ -6,7 +6,9 @@ import {
   getCaseById,
   addDoctorToCase,
   deleteCase,
-  updateCaseStatusOfLienOffer, // Add the handler for getting a case by ID
+  updateCaseStatusOfLienOffer,
+  getCaseByIdLien,
+  updateCase, // Add the handler for getting a case by ID
 } from "../controllers/caseController";
 
 const router = express.Router();
@@ -20,9 +22,13 @@ router.get("/allcases/:userId", getAllCases);
 // Route to get a case by caseId
 router.get("/:caseId", getCaseById); // New route for single case
 
+router.get("/lienCase/:caseId", getCaseByIdLien); // New route for single case
+
 router.delete("/:caseId", deleteCase); // New route for deleting a case
 // Route to update case status
 router.put("/:id/status", updateCaseStatus);
+
+router.put("/update/:caseId", updateCase);
 
 router.put("/LienOffer/:id", updateCaseStatusOfLienOffer); // New route for updating case status
 
