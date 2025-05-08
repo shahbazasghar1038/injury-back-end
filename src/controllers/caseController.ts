@@ -193,19 +193,19 @@ export async function getCaseById(
   const { caseId } = req.params;
 
   try {
-    // Find the case by the given caseId and include associated users (doctors/providers)
+    // Find the case by the given caseId
     const caseInstance: any = await Case.findByPk(caseId, {
       include: [
         {
           model: User,
           where: { role: "Doctor" }, // Filter users by "Doctor" role
-          // as: "doctors", // Alias for doctors
+          required: false, // Allow users not to be attached, to still get the case
         },
       ],
     });
 
+    // Check if the case exists
     if (!caseInstance) {
-      // If no case is found with the given caseId, send a 404 response
       return res.status(404).json({ error: "Case not found" });
     }
 
@@ -215,9 +215,11 @@ export async function getCaseById(
       doctors: caseInstance.Users, // This will return the associated doctors (users)
     });
   } catch (error: any) {
-    next(error); // Handle the error via middleware
+    console.error("Error fetching case by ID:", error.message);
+    next(error); // Pass the error to the error handling middleware
   }
 }
+
 // Controller to update case status
 export async function updateCaseStatus(
   req: Request,
