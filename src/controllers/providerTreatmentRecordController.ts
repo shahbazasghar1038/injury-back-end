@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import ProviderTreatmentRecord from "../models/providerTreatmentRecord"; // Import the model
+import { uploadFileToS3 } from "../utils/s3Uploader";
 
 // Controller to create a new provider treatment record
 export async function createProviderTreatmentRecord(
@@ -37,7 +38,8 @@ export async function updateProviderTreatmentRecord(
   next: NextFunction
 ): Promise<any> {
   const { id } = req.params; // Get the record ID from the request params
-  const { treatmentStatus, bill, recordRequest } = req.body;
+  const { treatmentStatus, bill, recordRequest, medicalRecord, medicalBills } =
+    req.body;
 
   try {
     // Find the provider treatment record by ID
@@ -48,10 +50,33 @@ export async function updateProviderTreatmentRecord(
         .json({ error: "Provider treatment record not found" });
     }
 
-    // Update the fields dynamically based on request body
+    // Update the fields dynamically based on the request body
     if (treatmentStatus) recordToUpdate.treatmentStatus = treatmentStatus;
     if (bill !== undefined) recordToUpdate.bill = bill;
     if (recordRequest) recordToUpdate.recordRequest = recordRequest;
+
+    // Handle file uploads for medical record (multiple files)
+    if (medicalRecord && Array.isArray(medicalRecord)) {
+      // Upload each file in the medicalRecord array
+      const medicalRecordUrls = await Promise.all(
+        medicalRecord.map((file: string) => {
+          const buffer = Buffer.from(file, "base64"); // Convert base64 string to buffer
+          return uploadFileToS3(buffer, "inj-s3"); // Upload file to S3
+        })
+      );
+      recordToUpdate.medicalRecord = medicalRecordUrls.join(","); // Store multiple URLs as a comma-separated string
+    }
+
+    // Handle file uploads for medical bills (multiple files)
+    if (medicalBills && Array.isArray(medicalBills)) {
+      const medicalBillsUrls = await Promise.all(
+        medicalBills.map((file: string) => {
+          const buffer = Buffer.from(file, "base64"); // Convert base64 string to buffer
+          return uploadFileToS3(buffer, "inj-s3"); // Upload file to S3
+        })
+      );
+      recordToUpdate.medicalBills = medicalBillsUrls.join(","); // Store multiple URLs as a comma-separated string
+    }
 
     // Save the updated record
     await recordToUpdate.save();

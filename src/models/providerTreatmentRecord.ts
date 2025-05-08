@@ -11,6 +11,8 @@ class ProviderTreatmentRecord extends Model {
   public treatmentStatus!: string;
   public bill!: string;
   public recordRequest!: string; // Default to "Pending"
+  public medicalRecord!: string | null; // New field for medical records (File URL)
+  public medicalBills!: string | null; // New field for medical bills (File URL)
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -41,6 +43,14 @@ ProviderTreatmentRecord.init(
     bill: {
       type: DataTypes.STRING,
       allowNull: true, // Optional bill information
+    },
+    medicalRecord: {
+      type: DataTypes.STRING,
+      allowNull: true, // Nullable file URL for medical records
+    },
+    medicalBills: {
+      type: DataTypes.STRING,
+      allowNull: true, // Nullable file URL for medical bills
     },
     recordRequest: {
       type: DataTypes.STRING,
