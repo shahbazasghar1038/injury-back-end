@@ -166,12 +166,12 @@ export async function getCaseByIdLien(
     // Fetch the provider treatment records for the doctors associated with the case
     const providerTreatmentRecords = await ProviderTreatmentRecord.findAll({
       where: { caseId: caseInstance.id },
-      // include: [
-      //   {
-      //     model: User,
-      //     as: "user", // Alias for accessing user (doctor) details
-      //   },
-      // ],
+      include: [
+        {
+          model: User,
+          as: "user", // Alias for accessing user (doctor) details
+        },
+      ],
     });
 
     // Send the case data, associated doctors, and provider treatment records in the response
