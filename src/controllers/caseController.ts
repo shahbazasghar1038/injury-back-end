@@ -152,6 +152,7 @@ export async function getCaseByIdLien(
         {
           model: User,
           where: { role: "Doctor" }, // Filter users by "Doctor" role
+          required: false, // Allow users not to be attached, to still get the case
           // as: "doctors", // Alias for doctors
         },
       ],
