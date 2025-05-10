@@ -8,37 +8,26 @@ import ArchivedCase from "../models/archivedCaseModel";
 import Task from "../models/taskModel";
 import ProviderTreatmentRecord from "../models/providerTreatmentRecord";
 
-const FREE_CASE_LIMIT = 3;
-
 // Controller to create a new case and check if the user has exceeded free case limit
 export async function createCase(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<any> {
   const { caseData, userId } = req.body;
 
   try {
-    // Check if user can add more free cases
-    const userCaseCount = await Case.count({
-      include: [
-        {
-          model: User,
-          where: { id: userId },
-          through: { where: {} },
-        },
-      ],
-    });
+    // Fetch the user's current case count and case limit
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const canAddFree = userCaseCount < FREE_CASE_LIMIT;
-
-    // If user has exceeded free limit and case is not marked as paid
-    if (!canAddFree && !caseData.isPaidCase) {
-      res.status(403).json({
-        error:
-          "You have reached the free case limit. Please make a payment to add more cases.",
+    // Check if the user has exceeded their case limit
+    if (user.usercaseCount >= user.usercaseLimit) {
+      return res.status(403).json({
+        error: `You have reached the maximum limit of ${user.usercaseLimit} cases. Please upgrade your plan or make a payment to add more cases.`,
       });
-      return;
     }
 
     // Create the case in the database with userId
@@ -53,11 +42,15 @@ export async function createCase(
       caseId: newCase.id,
     });
 
+    // Increment the user's case count
+    user.usercaseCount += 1;
+    await user.save();
+
     // Send the response with case data
     res.status(201).json({ case: newCase });
   } catch (error: any) {
     console.error("Error creating case:", error.message);
-    res.status(500).json({ error: error.message }); // Return the error message to the client
+    res.status(500).json({ error: error.message });
   }
 }
 

@@ -12,6 +12,9 @@ class User extends Model {
   public otpExpiresAt!: number | null; // Added OTP expiry time field
   public isVerified!: boolean;
   public speciality!: string | null; // Added speciality field
+  public usercaseLimit!: number; // Added user case limit field
+  public usercaseCount!: number; // Added user case count field
+
   // Other fields...
 }
 
@@ -26,6 +29,14 @@ User.init(
     otpExpiresAt: { type: DataTypes.BIGINT, allowNull: true },
     isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
     speciality: { type: DataTypes.STRING, allowNull: true }, // Adding the speciality field
+    usercaseLimit: {
+      type: DataTypes.INTEGER,
+      defaultValue: 3, // Default value for user case count
+    },
+    usercaseCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0, // Default value for user case count
+    },
   },
   { sequelize, modelName: "User" }
 );

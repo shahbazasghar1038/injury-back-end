@@ -39,9 +39,15 @@ export async function getAllLienOffers(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<any> {
+  const { caseId } = req.query; // Get the caseId from the query parameters
+
   try {
+    // If caseId is provided, filter by caseId
     const lienOffers = await LienOffer.findAll({
+      where: {
+        caseId, // Filter by caseId
+      },
       include: [
         {
           model: User, // Include User model
@@ -50,11 +56,18 @@ export async function getAllLienOffers(
       ],
     });
 
+    if (!lienOffers || lienOffers.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No lien offers found for this case" });
+    }
+
+    // Send the response with lien offers
     res.status(200).json({
       lienOffers,
     });
   } catch (error: any) {
     console.error("Error fetching lien offers:", error.message);
-    next(error);
+    next(error); // Pass the error to the error handling middleware
   }
 }
