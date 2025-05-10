@@ -91,11 +91,12 @@ export async function updateCase(
   }
 }
 
+// Controller to get all cases with associated provider treatment records based on userId
 export async function getAllCases(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<any> {
   const { userId } = req.params; // Assuming userId is passed as a URL parameter
 
   try {
@@ -123,8 +124,32 @@ export async function getAllCases(
       ],
     });
 
-    // Send the response with the cases
-    res.status(200).json(cases);
+    // If no cases found
+    if (!cases || cases.length === 0) {
+      return res.status(404).json({ message: "No cases found for this user" });
+    }
+
+    // Now we fetch the provider treatment records based on caseId and userId
+    const providerTreatmentRecords = await ProviderTreatmentRecord.findAll({
+      where: {
+        userId: userId, // Filter by userId
+        caseId: {
+          [Op.in]: cases.map((caseInstance: any) => caseInstance.id), // Get treatment records for the cases
+        },
+      },
+    });
+
+    // Create separate arrays for cases and treatment records
+    const casesData = cases.map((caseInstance: any) => caseInstance.toJSON());
+    const treatmentRecordsData = providerTreatmentRecords.map((record: any) =>
+      record.toJSON()
+    );
+
+    // Send the response with the cases and treatment records in separate arrays
+    res.status(200).json({
+      cases: casesData,
+      treatmentRecords: treatmentRecordsData,
+    });
   } catch (error: any) {
     console.error("Error fetching cases:", error.message);
     res.status(500).json({ error: error.message });
