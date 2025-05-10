@@ -38,8 +38,16 @@ export async function updateProviderTreatmentRecord(
   next: NextFunction
 ): Promise<any> {
   const { id } = req.params; // Get the record ID from the request params
-  const { treatmentStatus, bill, recordRequest, medicalRecord, medicalBills } =
-    req.body;
+  const {
+    treatmentStatus,
+    bill,
+    recordRequest,
+    doctorAcceptanceStatus,
+    reducedAmount,
+    BillRequest,
+    medicalRecord,
+    medicalBills,
+  } = req.body;
 
   try {
     // Find the provider treatment record by ID
@@ -54,6 +62,10 @@ export async function updateProviderTreatmentRecord(
     if (treatmentStatus) recordToUpdate.treatmentStatus = treatmentStatus;
     if (bill !== undefined) recordToUpdate.bill = bill;
     if (recordRequest) recordToUpdate.recordRequest = recordRequest;
+    if (doctorAcceptanceStatus)
+      recordToUpdate.doctorAcceptanceStatus = doctorAcceptanceStatus;
+    if (reducedAmount) recordToUpdate.reducedAmount = reducedAmount;
+    if (BillRequest) recordToUpdate.BillRequest = BillRequest;
 
     // Handle file uploads for medical record (multiple files)
     if (medicalRecord && Array.isArray(medicalRecord)) {
