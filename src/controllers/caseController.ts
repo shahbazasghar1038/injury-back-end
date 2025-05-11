@@ -156,118 +156,55 @@ export async function getAllCases(
   }
 }
 
-// export async function getCaseByIdLien(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> {
-//   const { caseId } = req.params; // Get the caseId from the request parameters
-
-//   try {
-//     // Find the case by the given caseId and include the associated doctors (users with the role 'Doctor')
-//     const caseInstance: any = await Case.findByPk(caseId, {
-//       include: [
-//         {
-//           model: User,
-//           where: { role: "Doctor" }, // Filter users by "Doctor" role
-//           required: false, // Allow users not to be attached, to still get the case
-//           // as: "doctors", // Alias for doctors
-//         },
-//       ],
-//     });
-
-//     // Check if the case exists
-//     if (!caseInstance) {
-//       return res.status(404).json({ error: "Case not found" });
-//     }
-
-//     // Fetch the provider treatment records for the doctors associated with the case
-//     const providerTreatmentRecords = await ProviderTreatmentRecord.findAll({
-//       where: { caseId: caseInstance.id },
-//       include: [
-//         {
-//           model: User,
-//           as: "user", // Alias for accessing user (doctor) details
-//         },
-//       ],
-//     });
-
-//     // Send the case data, associated doctors, and provider treatment records in the response
-//     return res.status(200).json({
-//       case: caseInstance,
-//       doctors: caseInstance.doctors, // Doctors associated with the case
-//       providerTreatmentRecords: providerTreatmentRecords, // Fetching provider treatment records based on caseId
-//     });
-//   } catch (error: any) {
-//     // Handle any error that might occur and pass it to the error handling middleware
-//     next(error);
-//   }
-// }
-
 export async function getCaseByIdLien(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<any> {
-  const { caseId } = req.params;
+  const { caseId } = req.params; // Get the caseId from the request parameters
 
   try {
+    // Find the case by the given caseId and include the associated doctors (users with the role 'Doctor')
     const caseInstance: any = await Case.findByPk(caseId, {
       include: [
         {
           model: User,
-          where: { role: "Doctor" },
-          required: false,
+          where: { role: "Doctor" }, // Filter users by "Doctor" role
+          required: false, // Allow users not to be attached, to still get the case
+          // as: "doctors", // Alias for doctors
         },
       ],
     });
 
+    // Check if the case exists
     if (!caseInstance) {
       return res.status(404).json({ error: "Case not found" });
     }
 
-    // Convert case to plain object
-    const caseObj = caseInstance.toJSON();
-
-    // Fetch all treatment records for this case
+    // Fetch the provider treatment records for the doctors associated with the case
     const providerTreatmentRecords = await ProviderTreatmentRecord.findAll({
       where: { caseId: caseInstance.id },
       include: [
         {
           model: User,
-          as: "user",
+          as: "user", // Alias for accessing user (doctor) details
         },
       ],
     });
 
-    // Convert all treatment records to plain objects
-    const treatmentRecords = providerTreatmentRecords.map((rec: any) =>
-      rec.toJSON()
-    );
-
-    // Prepare doctors array with their single treatment record (object or null)
-    const doctors = (caseObj.Users || []).map((doctor: any) => {
-      // Find the treatment record for this doctor
-      const doctorTreatmentRecord =
-        treatmentRecords.find((record: any) => record.userId === doctor.id) ||
-        null;
-      // Attach treatmentRecord property
-      return {
-        ...doctor,
-        treatmentRecord: doctorTreatmentRecord,
-      };
-    });
-
+    // Send the case data, associated doctors, and provider treatment records in the response
     return res.status(200).json({
-      case: {
-        ...caseObj,
-        doctors,
-      },
+      case: caseInstance,
+      doctors: caseInstance.doctors, // Doctors associated with the case
+      providerTreatmentRecords: providerTreatmentRecords, // Fetching provider treatment records based on caseId
     });
   } catch (error: any) {
+    // Handle any error that might occur and pass it to the error handling middleware
     next(error);
   }
 }
+
+
 
 export async function getCaseByIdLien2(
   req: Request,

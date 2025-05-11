@@ -15,7 +15,10 @@ import intakeRoutes from "./src/routes/intakeRoutes";
 import { setupAssociations } from "./src/models/associations";
 import lienOfferRoutes from "./src/routes/lienOfferRoutes";
 import providerTreatmentRecordRoutes from "./src/routes/providerTreatmentRecordRoutes";
+<<<<<<< HEAD
 import paymentRoutes from "./src/routes/paymentRoutes"; // Import your payment routes
+=======
+>>>>>>> dc3d7fb8d5ea72526c88ae143695e08c0893af2d
 dotenv.config();
 
 const app = express();
@@ -57,10 +60,13 @@ app.use("/api/archive", archivedCaseRoutes);
 app.use("/api/intakes", intakeRoutes);
 app.use("/api/lien-offers", lienOfferRoutes);
 app.use("/api/provider-treatment-records", providerTreatmentRecordRoutes);
+<<<<<<< HEAD
 app.use("/api/payment", paymentRoutes); // Add your payment routes here
 app.use("/api/health", (req, res) => {
   res.status(200).json({ message: "Server is running" }); // Health check endpoint
 });
+=======
+>>>>>>> dc3d7fb8d5ea72526c88ae143695e08c0893af2d
 // Setup associations
 setupAssociations();
 
