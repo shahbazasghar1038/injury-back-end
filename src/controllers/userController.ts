@@ -250,11 +250,40 @@ export async function getUserById(
 ): Promise<any> {
   try {
     const userId = req.params.id;
-    const user = await User.findByPk(userId, { include: [Address] });
+
+    // Fetch the user by ID, including the associated Addresses
+    const user: any = await User.findByPk(userId, {
+      include: [Address], // Include associated Addresses
+    });
+
+    // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user);
+
+    // Prepare the response without the token
+    const response = {
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        password: user.password, // You can omit password if you prefer
+        phone: user.phone,
+        role: user.role,
+        otp: user.otp,
+        otpExpiresAt: user.otpExpiresAt,
+        isVerified: user.isVerified,
+        speciality: user.speciality,
+        usercaseLimit: user.usercaseLimit,
+        usercaseCount: user.usercaseCount,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        Addresses: user.Addresses, // Associated addresses
+      },
+    };
+
+    // Send the response
+    res.json(response);
   } catch (error: any) {
     next(error);
   }
