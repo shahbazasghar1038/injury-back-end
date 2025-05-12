@@ -59,7 +59,7 @@ app.use("/api/lien-offers", lienOfferRoutes);
 app.use("/api/provider-treatment-records", providerTreatmentRecordRoutes);
 app.use("/api/payment", paymentRoutes); // Add your payment routes here
 app.use("/api/health", (req, res) => {
-  res.status(200).json({ message: "Server is running" }); // Health check endpoint
+  res.status(200).json({ message: "Server is running" }); // Health check endpointTTTTTTTTTTT
 });
 // Setup associations
 setupAssociations();
