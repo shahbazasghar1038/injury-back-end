@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import LienOffer from "../models/LienOffer";
 import Case from "../models/caseModel";
 import User from "../models/userModel";
+import { Op } from "sequelize";
 
 export async function createLienOffer(
   req: Request,
@@ -40,13 +41,32 @@ export async function getAllLienOffers(
   res: Response,
   next: NextFunction
 ): Promise<any> {
-  const { caseId } = req.query; // Get the caseId from the query parameters
+  const { caseId, userIds } = req.query; // Get caseId and userIds from the query parameters
 
   try {
-    // If caseId is provided, filter by caseId
+    if (!caseId || !userIds) {
+      return res.status(400).json({ error: "caseId and userIds are required" });
+    }
+
+    // Split userIds string into an array (if they are passed as a comma-separated string)
+    const userIdArray = (userIds as string)
+      .split(",")
+      .map((id) => parseInt(id.trim()));
+
+    // If userIdArray length is not 2, return an error (as you want to get conversation between two users)
+    if (userIdArray.length !== 2) {
+      return res
+        .status(400)
+        .json({ error: "Please provide exactly two userIds" });
+    }
+
+    // Fetch lien offers based on caseId and the userIds
     const lienOffers = await LienOffer.findAll({
       where: {
-        caseId, // Filter by caseId
+        caseId: caseId, // Filter by caseId
+        userId: {
+          [Op.in]: userIdArray, // Filter by userIds
+        },
       },
       include: [
         {
@@ -59,7 +79,7 @@ export async function getAllLienOffers(
     if (!lienOffers || lienOffers.length === 0) {
       return res
         .status(404)
-        .json({ message: "No lien offers found for this case" });
+        .json({ message: "No lien offers found for this case and users" });
     }
 
     // Send the response with lien offers
