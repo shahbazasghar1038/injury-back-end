@@ -56,7 +56,7 @@ export async function handlePaymentSuccess(
       }
 
       // Increment the user's case limit if they have not exceeded their limit
-      if (user.usercaseCount < user.usercaseLimit) {
+      if (user.usercaseCount == user.usercaseLimit) {
         user.usercaseCount += 1;
         await user.save();
 
