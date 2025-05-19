@@ -41,7 +41,7 @@ export async function getAllLienOffers(
   res: Response,
   next: NextFunction
 ): Promise<any> {
-  const { caseId } = req.query; // Get the caseId from the query parameters
+  const { caseId } = req.query; // Get the caseId from the query parametersssssss
 
   try {
     // If caseId is provided, filter by caseId
